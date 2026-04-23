@@ -2,26 +2,26 @@ import os
 import sys
 import time
 from PySide6 import QtWidgets, QtGui
-from PySide6.QtCore import Qt, QThread
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QGuiApplication
 import _UI_Control
 
 
-class FileCheckThread(QThread):
-    def __init__(self):
-        super().__init__()
-
-    def checkcolors(self):
-        while True:
-            time.sleep(3)
-            for savedfile, button  in zip(mc.savedfiles, mc.buttons):
-                if os.path.isfile(savedfile):
-                    button.setStyleSheet('background-color: rgb(0, 255, 0);')
-                else:
-                    button.setStyleSheet('background-color: rgb(255, 0, 0);')
-
-    def run(self):
-        self.checkcolors()
+# class FileCheckThread(QThread):
+#     def __init__(self):
+#         super().__init__()
+#
+#     def checkcolors(self):
+#         while True:
+#             time.sleep(3)
+#             for savedfile, button  in zip(mc.savedfiles, mc.buttons):
+#                 if os.path.isfile(savedfile):
+#                     button.setStyleSheet('background-color: rgb(0, 255, 0);')
+#                 else:
+#                     button.setStyleSheet('background-color: rgb(255, 0, 0);')
+#
+#     def run(self):
+#         self.checkcolors()
 
 
 class MainWindow(QtWidgets.QMainWindow, _UI_Control.Ui_MainWindow):
@@ -45,12 +45,30 @@ class MainWindow(QtWidgets.QMainWindow, _UI_Control.Ui_MainWindow):
 
         self.settargtename()
 
-        self.wrk_thread = FileCheckThread()
-        self.wrk_thread.start()
+        self.start_polling()
 
 
     def closeEvent(self, event):
-        self.wrk_thread.terminate()
+        self.poll_timer.stop()
+
+
+    def start_polling(self):
+        # Start a QTimer that checks for the output file every 2000ms.
+        self.poll_timer = QTimer()
+        self.poll_timer.setInterval(2000)  # milliseconds
+        self.poll_timer.timeout.connect(self.check_for_file)
+        self.poll_timer.start()
+
+
+    def check_for_file(self):
+        for savedfile, button in zip(self.savedfiles, self.buttons):
+            if os.path.isfile(savedfile):
+                button.setStyleSheet('background-color: rgb(0, 255, 0);')
+            else:
+                button.setStyleSheet('background-color: rgb(255, 0, 0);')
+
+
+
 
 
     def settargtename(self):
@@ -176,7 +194,6 @@ def main():
     parentfold = os.path.dirname(sys.argv[0])
     configfold = os.path.join(parentfold, '_internal')
     iconfile = os.path.join(configfold, 'blob.ico')
-
 
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('fusion')
