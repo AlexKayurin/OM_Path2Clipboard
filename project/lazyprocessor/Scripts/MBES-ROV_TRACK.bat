@@ -1,0 +1,1 @@
+powershell -noexit "& ""C:\Users\Public\ROV-MBES_TRACKS_CSV_TO_SHAPEFILE_conversion.ps1"""
